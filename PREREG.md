@@ -24,7 +24,7 @@ One sentence, about your own corpus, naming two of your systems and a direction.
 For example: "On my corpus of Kubernetes documentation, `rerank` has a higher MRR@10 than `hybrid`, because the queries are paraphrases that a first-stage fusion ranks too low."
 It should be something you could be wrong about.
 
-TODO: your hypothesis.
+On my corpus of OSHA construction regulations (29 CFR 1926), rerank has a higher nDCG@10 than hybrid, because the regulations are highly repetitive and structurally similar, so first stage retrievers surface many near duplicate or definitional passages that share the query's vocabulary, while an LLM reranker reads the query and all 20 candidates together in one prompt, so it can compare look alikes against each other and pick the one operative provision.
 
 ---
 
@@ -36,7 +36,8 @@ A difference of 0.02 is usually not worth a reranker's cost in time and tokens.
 In this course, choose a Δ of at least 0.15 unless you argue for a larger one, because a smaller gap takes more queries than one project can judge.
 Call your number Δ (delta).
 
-TODO: your metric and your Δ, with the reason.
+Metric: nDCG@10. I chose it over MRR@10 because some queries have several relevant sections, and nDCG counts all of them, not just the first.
+Δ = 0.15. A gap of this size matters to a user because the operative rule moves from somewhere in the top ten up to the first few results. Someone looking up a scaffold fall protection threshold usually acts on the first plausible section, and in 29 CFR 1926 that can be a definitions or scope paragraph. When a question has several relevant sections, such as the requirement and its training provision, 0.15 also means more of them show up without a second search. A wrong rule on a job site can mean an injury or a citation, so ~4 seconds and ~14,000 tokens per query is a fair price. A gain of 0.02 would reorder only a few queries.
 
 ---
 
@@ -65,7 +66,10 @@ After you score the own corpus, the minimum detectable difference that `uv run p
 It should come out at or below your Δ.
 If it does not, your queries varied more than your stage 1 sd suggested, and you will say so in the outcome.
 
-TODO: your sd, which pair it came from, your n, and the number of queries you will write (at least n).
+sd = 0.297: the standard deviation of per-query nDCG@10 differences between rerank and hybrid on the 20 shared practice queries (results/results.json).
+n = ((1.96 + 0.84) × 0.297 / 0.15)² ≈ 30.7, so 31 queries.
+I will write 32 queries: 22 drafted by Claude and 10 written by hand.
+The sd comes from only 20 queries on a different corpus, so it is noisy. The 0.39 the course gives for this pair, and my own measured 0.394, are MRR@10 spreads, and at that spread Δ 0.15 would need about 55 queries. My nDCG@10 spread was 0.297. If `uv run p2 score` prints a minimum detectable difference above 0.15, I will report the result as inconclusive at that Δ.
 
 ---
 
@@ -82,7 +86,8 @@ This is the default rule, and you can tighten it, but do not loosen it after you
 | around zero, with both ends inside plus or minus Δ | well-powered null: a difference as large as Δ is ruled out |
 | around zero, with an end beyond plus or minus Δ | inconclusive: the gold set could not settle it, and I say so |
 
-TODO: confirm or tighten this rule, and name the two systems and the metric once more.
+I keep the default rule as written, and I compute the interval once on the full gold set. I will not add or drop queries after seeing it.
+The systems are rerank (prediction: higher) and hybrid, the metric is nDCG@10, Δ is 0.15, and the interval is the paired 95% bootstrap interval in the own-pairs table.
 
 ---
 
