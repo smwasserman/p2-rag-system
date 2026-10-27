@@ -32,19 +32,60 @@ TODO: describe your three systems.
 Scores per system.
 
 <!-- p2:begin shared-practice -->
-_No scored runs here yet: run `uv run p2 run --corpus shared --queries practice --system bm25` (or `--all`), then `uv run p2 score`._
+| System | Recall@10 | MRR@10 | nDCG@10 |
+| --- | ---: | ---: | ---: |
+| bm25 | 0.625 | 0.507 | 0.518 |
+| dense | 0.558 | 0.562 | 0.480 |
+| hybrid | 0.592 | 0.471 | 0.443 |
+| rerank | 0.733 | 0.800 | 0.743 |
+
+20 judged queries; nDCG uses binary labels; a random ranking of the 2,484 documents would get recall@10 near 0.004.
 <!-- p2:end shared-practice -->
 
 The same scores per query class.
 
 <!-- p2:begin shared-practice-classes -->
-_No scored runs here yet: run `uv run p2 run --corpus shared --queries practice --system bm25` (or `--all`), then `uv run p2 score`._
+| System | Metric | identifier (n=7) | paraphrase (n=7) | mixed (n=6) |
+| --- | --- | ---: | ---: | ---: |
+| bm25 | Recall@10 | 1.000 | 0.000 | 0.917 |
+| bm25 | MRR@10 | 0.810 | 0.000 | 0.746 |
+| bm25 | nDCG@10 | 0.857 | 0.000 | 0.728 |
+| dense | Recall@10 | 0.214 | 0.595 | 0.917 |
+| dense | MRR@10 | 0.333 | 0.714 | 0.653 |
+| dense | nDCG@10 | 0.211 | 0.593 | 0.661 |
+| hybrid | Recall@10 | 0.500 | 0.405 | 0.917 |
+| hybrid | MRR@10 | 0.514 | 0.152 | 0.792 |
+| hybrid | nDCG@10 | 0.397 | 0.202 | 0.779 |
+| rerank | Recall@10 | 0.643 | 0.595 | 1.000 |
+| rerank | MRR@10 | 0.714 | 0.714 | 1.000 |
+| rerank | nDCG@10 | 0.641 | 0.626 | 1.000 |
 <!-- p2:end shared-practice-classes -->
 
 Differences between every pair of systems, each with its paired interval and the minimum detectable difference.
 
 <!-- p2:begin shared-practice-pairs -->
-_No scored runs here yet: run `uv run p2 run --corpus shared --queries practice --system bm25` (or `--all`), then `uv run p2 score`._
+| Comparison | Metric | Mean difference | 95% interval | MDD | Reading |
+| --- | --- | ---: | ---: | ---: | --- |
+| dense minus bm25 | Recall@10 | -0.067 | [-0.350, +0.225] | 0.415 | not distinguishable |
+| dense minus bm25 | MRR@10 | +0.055 | [-0.225, +0.343] | 0.412 | not distinguishable |
+| dense minus bm25 | nDCG@10 | -0.039 | [-0.302, +0.231] | 0.385 | not distinguishable |
+| hybrid minus bm25 | Recall@10 | -0.033 | [-0.250, +0.192] | 0.324 | not distinguishable |
+| hybrid minus bm25 | MRR@10 | -0.037 | [-0.178, +0.083] | 0.192 | not distinguishable |
+| hybrid minus bm25 | nDCG@10 | -0.075 | [-0.238, +0.075] | 0.228 | not distinguishable |
+| hybrid minus dense | Recall@10 | +0.033 | [-0.125, +0.192] | 0.231 | not distinguishable |
+| hybrid minus dense | MRR@10 | -0.092 | [-0.306, +0.109] | 0.301 | not distinguishable |
+| hybrid minus dense | nDCG@10 | -0.036 | [-0.200, +0.113] | 0.227 | not distinguishable |
+| rerank minus bm25 | Recall@10 | +0.108 | [-0.133, +0.350] | 0.351 | not distinguishable |
+| rerank minus bm25 | MRR@10 | +0.293 | [+0.043, +0.533] | 0.353 | rerank higher |
+| rerank minus bm25 | nDCG@10 | +0.225 | [-0.011, +0.451] | 0.336 | not distinguishable |
+| rerank minus dense | Recall@10 | +0.175 | [+0.033, +0.333] | 0.221 | rerank higher |
+| rerank minus dense | MRR@10 | +0.237 | [+0.083, +0.408] | 0.239 | rerank higher |
+| rerank minus dense | nDCG@10 | +0.264 | [+0.128, +0.413] | 0.210 | rerank higher |
+| rerank minus hybrid | Recall@10 | +0.142 | [+0.050, +0.258] | 0.160 | rerank higher |
+| rerank minus hybrid | MRR@10 | +0.329 | [+0.164, +0.504] | 0.247 | rerank higher |
+| rerank minus hybrid | nDCG@10 | +0.300 | [+0.176, +0.430] | 0.186 | rerank higher |
+
+The interval is a paired bootstrap (10,000 resamples of the queries); MDD is the smallest difference this many queries detect 80% of the time.
 <!-- p2:end shared-practice-pairs -->
 
 The 40 test queries have no answer key in this repo.
@@ -63,7 +104,9 @@ TODO: write what the practice-query intervals let you claim.
 ## 2. Stage 1 - cited answers on the 12 shared questions
 
 <!-- p2:begin answers -->
-_No answers files yet: run `uv run p2 answer --corpus shared --system NAME`, then `uv run p2 score`._
+| Label | System | Verified (in) | 95% interval | not_found (in) | Declined (out) | 95% interval | Quotes found |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| rerank | rerank | 8 of 8 (100%) | [0.676, 1.000] | 0 of 8 (0%) | 4 of 4 (100%) | [0.510, 1.000] | 12 of 12 |
 <!-- p2:end answers -->
 
 Which system answered, and why that one?
@@ -214,7 +257,42 @@ _No judged answers yet (stretch option 2): `uv run p2 judge answers/shared/LABEL
 The Claude calls, tokens and seconds in every trace you committed, and what a cheaper system or answers file saves against what it loses.
 
 <!-- p2:begin stretch-cost -->
-_No Claude traces yet: a run of a system that calls Claude, `p2 answer` and `p2 judge` write them in traces/, and then `uv run p2 score` fills this table._
+Every trace in traces/ that records a Claude call:
+
+| Trace | System | Spans | Claude calls | Saved | Input tokens | Output tokens | Seconds | Input per span | Output per span | Seconds per span |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| traces/answers-rerank.jsonl | rerank | 12 | 24 | 4 | 200,469 | 4,174 | 103.6 | 16,706 | 348 | 8.6 |
+| traces/answers-rerank.r1.jsonl | rerank | 12 | 24 | 0 | 200,702 | 4,374 | 98.5 | 16,725 | 364 | 8.2 |
+| traces/answers-rerank.r2.jsonl | rerank | 12 | 24 | 0 | 200,682 | 4,048 | 111.3 | 16,724 | 337 | 9.3 |
+| traces/answers-rerank.r3.jsonl | rerank | 12 | 24 | 0 | 203,157 | 4,429 | 114.3 | 16,930 | 369 | 9.5 |
+| traces/shared-practice-rerank.jsonl | rerank | 20 | 20 | 2 | 263,406 | 1,820 | 77.9 | 13,170 | 91 | 3.9 |
+| traces/shared-practice-rerank.r1.jsonl | rerank | 20 | 20 | 0 | 263,420 | 1,985 | 61.4 | 13,171 | 99 | 3.1 |
+| traces/shared-practice-rerank.r2.jsonl | rerank | 20 | 20 | 0 | 288,949 | 2,177 | 74.3 | 14,447 | 109 | 3.7 |
+| traces/shared-practice-rerank.r3.jsonl | rerank | 20 | 20 | 0 | 340,116 | 2,325 | 89.7 | 17,006 | 116 | 4.5 |
+| traces/shared-test-rerank.jsonl | rerank | 40 | 40 | 0 | 569,145 | 4,475 | 171.4 | 14,229 | 112 | 4.3 |
+
+A span is one query of a run, one question of an answers file, or one claim of a judged file. A saved reply costs nothing now, so it counts the tokens and the seconds of the call that made it.
+
+Every pair of systems on the same queries where at least one calls Claude, the one with fewer Claude input tokens per query first:
+
+| Cheaper minus dearer | Queries | MRR@10 difference | 95% interval | Input tokens saved per query | Seconds saved per query | Reading |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| shared practice: bm25 minus rerank | 20 | -0.293 | [-0.533, -0.043] | 13,170 | 3.9 | rerank higher |
+| shared practice: dense minus rerank | 20 | -0.237 | [-0.408, -0.083] | 13,170 | 3.9 | rerank higher |
+| shared practice: hybrid minus rerank | 20 | -0.329 | [-0.504, -0.164] | 13,170 | 3.9 | rerank higher |
+
+The difference is the cheaper system's score minus the dearer one's, with its paired interval; the savings count Claude calls only, so a system that makes none saves all of the other's.
+
+Systems that do not call Claude, from traces/retrieval/ on the machine that last ran `p2 score` (git ignores that folder, so `p2 check` does not compare this part):
+
+| Trace | System | Queries | Seconds | Milliseconds per query |
+| --- | --- | ---: | ---: | ---: |
+| traces/retrieval/shared-practice-bm25.jsonl | bm25 | 20 | 0.04 | 1.9 |
+| traces/retrieval/shared-practice-dense.jsonl | dense | 20 | 0.16 | 8.1 |
+| traces/retrieval/shared-practice-hybrid.jsonl | hybrid | 20 | 0.22 | 10.8 |
+| traces/retrieval/shared-test-bm25.jsonl | bm25 | 40 | 0.08 | 2.1 |
+| traces/retrieval/shared-test-dense.jsonl | dense | 40 | 0.52 | 13.0 |
+| traces/retrieval/shared-test-hybrid.jsonl | hybrid | 40 | 0.73 | 18.3 |
 <!-- p2:end stretch-cost -->
 
 ### The grep agent (option 5)
@@ -241,7 +319,37 @@ Write the five things here.
 Three runs of the reranker on the practice queries, and three answers files, with their run-to-run spread and Wilson intervals.
 
 <!-- p2:begin repeats -->
-_No repeated runs or answers files yet (598E: `p2 run ... --repeat 3` and `p2 answer ... --repeat 3`)._
+Repeated runs of rerank on shared/practice:
+
+| Run | Recall@10 | MRR@10 | nDCG@10 |
+| --- | ---: | ---: | ---: |
+| rerank.r1 | 0.733 | 0.800 | 0.743 |
+| rerank.r2 | 0.733 | 0.800 | 0.743 |
+| rerank.r3 | 0.758 | 0.800 | 0.765 |
+| range (max minus min) | 0.025 | 0.000 | 0.021 |
+
+| Comparison | Metric | Mean difference | 95% interval | Reading |
+| --- | --- | ---: | ---: | --- |
+| rerank.r1 minus hybrid | Recall@10 | +0.142 | [+0.050, +0.258] | rerank.r1 higher |
+| rerank.r2 minus hybrid | Recall@10 | +0.142 | [+0.050, +0.258] | rerank.r2 higher |
+| rerank.r3 minus hybrid | Recall@10 | +0.167 | [+0.058, +0.292] | rerank.r3 higher |
+| rerank.r1 minus hybrid | MRR@10 | +0.329 | [+0.164, +0.504] | rerank.r1 higher |
+| rerank.r2 minus hybrid | MRR@10 | +0.329 | [+0.164, +0.504] | rerank.r2 higher |
+| rerank.r3 minus hybrid | MRR@10 | +0.329 | [+0.164, +0.504] | rerank.r3 higher |
+| rerank.r1 minus hybrid | nDCG@10 | +0.300 | [+0.176, +0.430] | rerank.r1 higher |
+| rerank.r2 minus hybrid | nDCG@10 | +0.300 | [+0.176, +0.430] | rerank.r2 higher |
+| rerank.r3 minus hybrid | nDCG@10 | +0.322 | [+0.197, +0.449] | rerank.r3 higher |
+
+Repeated answers shared/rerank:
+
+| File | Verified (in) | 95% interval | Declined (out) | 95% interval |
+| --- | ---: | ---: | ---: | ---: |
+| rerank.r1 | 8 of 8 (100%) | [0.676, 1.000] | 4 of 4 (100%) | [0.510, 1.000] |
+| rerank.r2 | 8 of 8 (100%) | [0.676, 1.000] | 4 of 4 (100%) | [0.510, 1.000] |
+| rerank.r3 | 8 of 8 (100%) | [0.676, 1.000] | 4 of 4 (100%) | [0.510, 1.000] |
+| range (max minus min) | 0.000 |  | 0.000 |  |
+
+Each repeat answers the same questions, so the repeats are not independent trials and their counts are not pooled into one interval.
 <!-- p2:end repeats -->
 
 Does the reranker's gain over its first stage survive the run-to-run variation?
