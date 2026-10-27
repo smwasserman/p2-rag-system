@@ -31,7 +31,7 @@ class Rerank:
     def __init__(self, corpus, cfg):
         self.cfg = cfg
         self.first = retrievers.build(FIRST_STAGE, corpus, cfg)
-        self.doc_text = {d.docid: d.text for d in corpus.docs}
+        self.doc_text = {docid: d.text for docid, d in corpus.docs.items()}
         self.chunk_text = {c.id: c.text for c in self.first.parts[0].chunks}
 
     def rerank(self, text, ranked, texts, k):

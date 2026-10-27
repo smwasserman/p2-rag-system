@@ -1,4 +1,24 @@
-# Your gold set's queries, one per line: qid<TAB>class<TAB>text<TAB>origin, separated by tabs.
-# origin is hand when you wrote the query yourself and claude when a model drafted it; at least 10 must be hand.
-# class is a word you choose, for example identifier, paraphrase or mixed as in the shared sets; scores are reported per class.
-# Lines that start with # are comments, so delete these lines or keep them, as you like.
+# Own gold set for OSHA 29 CFR 1926 (construction): qid<TAB>class<TAB>text<TAB>origin.
+# c01-c22 were drafted by Claude (origin claude); h01 onward are written by hand.
+c01	identifier	What does 1926.1053 require for portable ladders?	claude
+c02	identifier	1926.1153 Table 1	claude
+c03	identifier	What are the duties of an attendant under 1926.1209?	claude
+c04	identifier	1926.1424 swing radius	claude
+c05	identifier	What does 1926.502(d) say about personal fall arrest systems?	claude
+c06	identifier	1926.651 access and egress from trenches	claude
+c07	identifier	Table A minimum clearance distances 1926.1408	claude
+c08	paraphrase	How high up do construction workers have to be before they need something to stop them from falling?	claude
+c09	paraphrase	Can a person ride on the hook or a platform hung from a crane?	claude
+c10	paraphrase	How far must a crane stay away from overhead electrical wires?	claude
+c11	paraphrase	What must be done before workers go into a manhole or tank that could have bad air?	claude
+c12	paraphrase	Do workers cutting concrete need to control the dust they breathe?	claude
+c13	paraphrase	How strong does a work platform hanging off a building have to be?	claude
+c14	paraphrase	When does a ditch need its walls braced or sloped so it does not cave in?	claude
+c15	paraphrase	What should a worker carry or wear when diving underwater on a job?	claude
+c16	mixed	Training requirements for crane operator certification	claude
+c17	mixed	Ground-fault circuit interrupters on construction sites	claude
+c18	mixed	Guardrail top rail height requirements	claude
+c19	mixed	Lead exposure medical surveillance blood lead level	claude
+c20	mixed	Asbestos Class I work regulated area	claude
+c21	mixed	Storage of flammable liquids in approved containers indoors	claude
+c22	mixed	Hearing protection when noise exceeds permissible levels	claude
