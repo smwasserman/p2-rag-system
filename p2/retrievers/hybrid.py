@@ -1,25 +1,37 @@
-"""Your hybrid retriever (stage 1): fuse the rankings of two systems into one.
+"""Hybrid retrieval: reciprocal rank fusion (k = 60) of bm25 and dense, as rrf() in the 13 lab.
 
-This file is yours to write. Until you write it, build() raises NotImplementedError, and p2 skips
-the system and lists it as to do.
-
-Where the idea is:
-- the 13 lab's pipeline.py in the course repo (class/13-rag-pipeline/lab/starter/pipeline.py):
-  rrf() is reciprocal rank fusion with k = 60, where each document scores the sum of 1 / (60 + rank)
-  over the rankings it appears in, and command_fuse() fuses bm25 with an embedder;
-- get the two systems you fuse with p2.retrievers.build("bm25", corpus, cfg) and
-  build("dense", corpus, cfg), so each index is built once per run;
-- fuse full rankings, not top-10 lists (ask each system for len(corpus.docs) documents), because a
-  document that is 11th in both lists can belong in the fused top 10;
-- order the fused documents with p2.runfile.order(), so equal scores fall in document id order.
-
-If you want `p2 answer` to work with hybrid, also give it search_chunks(text, k): the same fusion over chunk rankings.
+Each document scores the sum of 1 / (60 + rank) over the two full rankings, so a document that is
+11th in both can still reach the fused top 10. search_chunks does the same over chunk rankings.
 """
 
+from p2 import retrievers
+from p2.runfile import order
+
 NEEDS_CLAUDE = False
+RRF_K = 60
+PARTS = ("bm25", "dense")
+
+
+def rrf(rankings, k=RRF_K):
+    scores = {}
+    for ranking in rankings:
+        for rank, (item, _) in enumerate(ranking, 1):
+            scores[item] = scores.get(item, 0.0) + 1 / (k + rank)
+    return order(scores.items())
+
+
+class Hybrid:
+    def __init__(self, corpus, cfg):
+        self.parts = [retrievers.build(name, corpus, cfg) for name in PARTS]
+        self.n_docs = len(corpus.docs)
+        self.n_chunks = len(self.parts[0].chunks)
+
+    def search(self, text, k):
+        return rrf([p.search(text, self.n_docs) for p in self.parts])[:k]
+
+    def search_chunks(self, text, k):
+        return rrf([p.search_chunks(text, self.n_chunks) for p in self.parts])[:k]
 
 
 def build(corpus, cfg):
-    raise NotImplementedError(
-        "hybrid is not built yet: write p2/retrievers/hybrid.py (the idea is rrf() in the 13 lab's pipeline.py)."
-    )
+    return Hybrid(corpus, cfg)
