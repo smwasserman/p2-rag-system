@@ -22,3 +22,13 @@ c19	mixed	Lead exposure medical surveillance blood lead level	claude
 c20	mixed	Asbestos Class I work regulated area	claude
 c21	mixed	Storage of flammable liquids in approved containers indoors	claude
 c22	mixed	Hearing protection when noise exceeds permissible levels	claude
+h01	identifier	1926.760 fall protection for steel erection connectors	hand
+h02	identifier	What does 1926.1052 require for stairways with more than 12 feet of rise?	hand
+h03	identifier	1926.350 storage of gas cylinders during welding	hand
+h04	paraphrase	Does my crew need safety glasses when chipping or grinding?	hand
+h05	paraphrase	How many toilets and how much drinking water do I have to provide on a job site?	hand
+h06	paraphrase	How do you store and move dynamite on a construction site?	hand
+h07	paraphrase	Can a worker stand on the rail of a lift basket or put a ladder on it to reach higher?	hand
+h08	mixed	Hazard communication safety data sheets for chemicals on site	hand
+h09	mixed	Rollover protective structures on earthmoving equipment	hand
+h10	mixed	Fire extinguisher placement and travel distance on a construction site	hand
