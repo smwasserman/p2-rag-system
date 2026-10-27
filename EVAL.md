@@ -265,6 +265,7 @@ Every trace in traces/ that records a Claude call:
 | traces/answers-rerank.r1.jsonl | rerank | 12 | 24 | 0 | 200,702 | 4,374 | 98.5 | 16,725 | 364 | 8.2 |
 | traces/answers-rerank.r2.jsonl | rerank | 12 | 24 | 0 | 200,682 | 4,048 | 111.3 | 16,724 | 337 | 9.3 |
 | traces/answers-rerank.r3.jsonl | rerank | 12 | 24 | 0 | 203,157 | 4,429 | 114.3 | 16,930 | 369 | 9.5 |
+| traces/own-own-rerank.jsonl | rerank | 32 | 32 | 0 | 593,204 | 3,266 | 98.5 | 18,538 | 102 | 3.1 |
 | traces/shared-practice-rerank.jsonl | rerank | 20 | 20 | 2 | 263,406 | 1,820 | 77.9 | 13,170 | 91 | 3.9 |
 | traces/shared-practice-rerank.r1.jsonl | rerank | 20 | 20 | 0 | 263,420 | 1,985 | 61.4 | 13,171 | 99 | 3.1 |
 | traces/shared-practice-rerank.r2.jsonl | rerank | 20 | 20 | 0 | 288,949 | 2,177 | 74.3 | 14,447 | 109 | 3.7 |
@@ -287,12 +288,15 @@ Systems that do not call Claude, from traces/retrieval/ on the machine that last
 
 | Trace | System | Queries | Seconds | Milliseconds per query |
 | --- | --- | ---: | ---: | ---: |
+| traces/retrieval/own-own-bm25.jsonl | bm25 | 32 | 0.02 | 0.7 |
+| traces/retrieval/own-own-dense.jsonl | dense | 32 | 0.15 | 4.8 |
+| traces/retrieval/own-own-hybrid.jsonl | hybrid | 32 | 0.19 | 5.9 |
 | traces/retrieval/shared-practice-bm25.jsonl | bm25 | 20 | 0.04 | 1.9 |
-| traces/retrieval/shared-practice-dense.jsonl | dense | 20 | 0.16 | 8.1 |
+| traces/retrieval/shared-practice-dense.jsonl | dense | 20 | 0.18 | 9.1 |
 | traces/retrieval/shared-practice-hybrid.jsonl | hybrid | 20 | 0.22 | 10.8 |
-| traces/retrieval/shared-test-bm25.jsonl | bm25 | 40 | 0.08 | 2.1 |
-| traces/retrieval/shared-test-dense.jsonl | dense | 40 | 0.52 | 13.0 |
-| traces/retrieval/shared-test-hybrid.jsonl | hybrid | 40 | 0.73 | 18.3 |
+| traces/retrieval/shared-test-bm25.jsonl | bm25 | 40 | 0.07 | 1.8 |
+| traces/retrieval/shared-test-dense.jsonl | dense | 40 | 0.26 | 6.6 |
+| traces/retrieval/shared-test-hybrid.jsonl | hybrid | 40 | 0.43 | 10.9 |
 <!-- p2:end stretch-cost -->
 
 ### The grep agent (option 5)
