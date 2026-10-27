@@ -7,8 +7,8 @@ It cannot prove a license, and you remain responsible for every document you com
 ## Summary
 
 - Documents: 307
-- ok: 305 (of which 0 had a flag that you reviewed)
-- flag, not yet reviewed: 2
+- ok: 307 (of which 2 had a flag that you reviewed)
+- flag, not yet reviewed: 0
 - fail: 0
 - Online lookups: not run (use `--online` on your own machine)
 
@@ -53,9 +53,9 @@ It cannot prove a license, and you remain responsible for every document you com
 | `1926.1101__part02` | us-gov-public-domain | ok | - |
 | `1926.1101__part03` | us-gov-public-domain | ok | - |
 | `1926.1101__part04` | us-gov-public-domain | ok | - |
-| `1926.1101__part05` | us-gov-public-domain | flag | publisher name on 1 line (line 3: "Appendix B to § 1926.1101—Sampling and Analysis (Non-Mandatory) Matrix Air: OSHA Permissible Exposure Limits: "); read the source, then write `reviewed: <reason with the quote>` in the notes, or remove the document |
+| `1926.1101__part05` | us-gov-public-domain | ok | reviewed: "ACS" is a bibliography citation in OSHA's Appendix B reference list, not a rights notice; 29 CFR 1926.1101 is OSHA regulatory text (US government work) and has no copyright, reprint or permission wording; the page says "Wash. DC: American Chemical Society, (ACS Symposium Series 120) 1980" (https://www.ecfr.gov/api/versioner/v1/full/2026-10-14/title-29.xml?part=1926) |
 | `1926.1101__part06` | us-gov-public-domain | ok | - |
-| `1926.1101__part07` | us-gov-public-domain | flag | publisher name on 1 line (line 7: "Appendix K to § 1926.1101—Polarized Light Microscopy of Asbestos (Non-Mandatory) Method number: ID-191 Matrix:"); read the source, then write `reviewed: <reason with the quote>` in the notes, or remove the document |
+| `1926.1101__part07` | us-gov-public-domain | ok | reviewed: "ACS" and "Wiley" are a contact listing in Appendix J and a bibliography citation in Appendix K, not rights notices; 29 CFR 1926.1101 is OSHA regulatory text (US government work) and has no copyright, reprint or permission wording; the page says "The American Cancer Society (ACS) is a voluntary organization" and "Dana's Textbook of Mineralogy; Fourth Ed.; John Wiley and Son, New York, 1950" (https://www.ecfr.gov/api/versioner/v1/full/2026-10-14/title-29.xml?part=1926) |
 | `1926.1102` | us-gov-public-domain | ok | - |
 | `1926.1103` | us-gov-public-domain | ok | - |
 | `1926.1104` | us-gov-public-domain | ok | - |
@@ -323,8 +323,3 @@ It cannot prove a license, and you remain responsible for every document you com
 | `1926.967` | us-gov-public-domain | ok | - |
 | `1926.968` | us-gov-public-domain | ok | - |
 | `1926.97` | us-gov-public-domain | ok | mentions ASTM, IEEE without words about rights on the same line, which is not a flag |
-
-## Next
-
-Ask Claude Code to read `.claude/skills/license-check/SKILL.md` and walk you through each failing or flagged document with it.
-For each one you open the source page, quote the license text, and then either fix the manifest, write `reviewed: <reason with the quote>` in the notes, or remove the document.
