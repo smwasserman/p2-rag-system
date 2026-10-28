@@ -25,7 +25,7 @@ The minimum detectable difference is the smallest gap this many queries could re
 
 For each of `dense`, `hybrid` and `rerank`, one or two sentences: the embedding model, how documents were chunked, what was fused and how, how many candidates the reranker saw, and anything you changed from the 12 and 13 lab code.
 
-TODO: describe your three systems.
+`dense` encodes documents split into 300-word chunks (50-word overlap) using `BAAI/bge-small-en-v1.5` embeddings (384 dimensions), ranking by maximum inner product chunk similarity. `hybrid` fuses chunk-level BM25 (configured with the `codes` tokenizer, $k_1 = 0.9, b = 0.4$) and `dense` rankings using Reciprocal Rank Fusion (RRF constant 60), aggregating chunks by maximum score per document. `rerank` takes the top 20 candidate documents from `hybrid`, selects each document's top-scoring chunk, and presents them in a single prompt to `claude-3-5-sonnet` with a forced JSON schema ordering output, scoring documents by their returned reciprocal rank.
 
 ### Practice queries (20)
 
@@ -97,7 +97,11 @@ Which differences are distinguishable from zero and which are not?
 What is the minimum detectable difference at 20 queries, and what does that say about any gap smaller than it?
 Which claim from lecture 12 or 13 did your numbers support, and which did they leave open?
 
-TODO: write what the practice-query intervals let you claim.
+On the 20 shared practice queries, only the comparisons involving `rerank` are distinguishable from zero: `rerank` is significantly higher than `hybrid` (MRR +0.329 [+0.164, +0.504]), higher than `dense` (MRR +0.237 [+0.083, +0.408]), and higher than `bm25` (MRR +0.293 [+0.043, +0.533]). In contrast, all pairwise differences among the three first-stage retrievers are not distinguishable on this set: `dense minus bm25` (+0.055 [-0.225, +0.343]), `hybrid minus bm25` (-0.037 [-0.178, +0.083]), and `hybrid minus dense` (-0.092 [-0.306, +0.109]).
+
+With 20 practice queries, the minimum detectable difference (MDD) at 80% power is substantial—0.412 for dense vs. bm25, 0.301 for hybrid vs. dense, and 0.247 for rerank vs. hybrid. This means any performance gap smaller than ~0.25 to 0.41 is statistically invisible to this 20-query sample rather than absent.
+
+The per-class breakdown strongly supports the core claim from lectures 12 and 13: `bm25` dominates `identifier` queries (MRR 0.810) but completely fails on `paraphrase` queries (MRR 0.000), while `dense` exhibits the exact opposite profile (MRR 0.333 on identifiers, 0.714 on paraphrases). The results also illustrate the RRF failure mode: on paraphrases, `hybrid` achieves only 0.152 MRR, far below dense's 0.714, because BM25's confident, incorrect rankings penalize dense's correct hits during rank averaging. `rerank` successfully recovers by inspecting hybrid's full top 20 candidates, matching dense on paraphrases (MRR 0.714) and scoring 1.000 on mixed queries.
 
 ---
 
@@ -116,7 +120,12 @@ Then read three in-corpus answers that `uv run p2 verify` passed.
 For each one, open the cited chunk and say whether the quote really supports the claim next to it.
 The check proves a quote is a real piece of the chunk and cannot prove that it supports the claim, so this reading is the part only you can do.
 
-TODO: write your answer choices and your three-answer audit.
+I selected `rerank` to answer the 12 questions because it achieved the highest recall@10 (0.733) and MRR@10 (0.800) on the practice queries, ensuring the top 5 chunks passed to Claude contained the relevant regulatory provisions. Using the default `prompts/answer.txt`, 8 of 8 in-corpus questions verified (100% [0.676, 1.000]) with 12 of 12 quotes found verbatim in their cited chunks, and 4 of 4 out-of-corpus questions were cleanly declined (100% [0.510, 1.000]).
+
+Auditing three in-corpus verified answers:
+1. **Question a01** ("Within how many minutes must a mine operator call MSHA after an accident that kills a miner?"): The answer cites chunk `cfr30-50.10#0` with two claims. Claim 1 states the operator must contact MSHA immediately within 15 minutes, quoting "The operator shall immediately contact MSHA at once without delay and within 15 minutes at the toll-free number, 1-800-746-1553, once the operator knows or should know that an accident has occurred involving:". Claim 2 states a death at the mine is a covered accident, quoting "(a) A death of an individual at the mine;". Reading `cfr30-50.10#0` confirms both quotes are exact verbatim substrings and directly substantiate the 15-minute mandate for fatal accidents.
+2. **Question a02** ("What minimum incombustible content must the combined dust in an underground coal mine keep where no methane is present?"): The answer cites chunk `cfr30-75.403#0`. Claim 1 asserts the incombustible content must be at least 80 percent, quoting "the incombustible content of the combined coal dust, rock dust, and other dust shall be not less than 80 percent." Claim 2 notes the requirement increases with methane, quoting "Where methane is present in any ventilating current, the percent of incombustible content of such combined dust shall be increased 0.4 percent for each 0.1 percent of methane." Reading `cfr30-75.403#0` confirms the quotes are verbatim and completely support the rule.
+3. **Question a03** ("How long must the self-rescue device given to each underground coal miner be able to protect that person?"): The answer cites chunk `cfr30-75.1714#0`, quoting "an approved self-rescue device or devices which is adequate to protect such person for 1 hour or longer." Reading `cfr30-75.1714#0` confirms the quote is accurate and directly supports the 1-hour requirement.
 
 ---
 
@@ -128,7 +137,7 @@ What is it, where did it come from, how many documents and how many megabytes, a
 Name the one or two documents you were least sure about and what you decided.
 Say which of the allowed sources in the brief it comes from.
 
-TODO: describe your corpus and its license basis.
+The corpus consists of 29 CFR Part 1926 (OSHA Safety and Health Regulations for Construction), downloaded directly from the official eCFR annual XML bulk repository—an allowed primary source under the brief. It contains 307 markdown documents totaling 2.4 MB (approximately 509,146 estimated tokens), with each section formatted as an individual markdown document whose first line is the section heading. The license basis is United States Government work in the public domain (`us-gov-public-domain`) pursuant to 17 U.S.C. § 105. All 307 documents passed `uv run p2 license`. Two documents—`1926.1101__part05` and `1926.1101__part07`—were flagged during scanning for mentions of "ACS" and "Wiley"; upon examining the source XML, I confirmed that these were academic citations (an ACS symposium paper and a 1950 Wiley geology text) and organizational contact information for the American Cancer Society, rather than copyrighted third-party material, and recorded this in the manifest notes.
 
 ### The gold set
 
@@ -137,7 +146,9 @@ How did you decide that a document is relevant: write your relevance rule in two
 How did you find candidates (the systems' top 10, a keyword search, reading), and did you read every document before you labeled it?
 Your labels are binary (`rel` 1) unless you say otherwise: if you use graded labels, declare the scale here, for example 2 means the document answers the query fully and 1 means it helps.
 
-TODO: describe your gold set and your relevance rule.
+The gold set comprises 32 queries: 10 written by hand (`origin hand`) and 22 drafted with Claude (`origin claude`), spanning three classes: `identifier` (10 queries), `paraphrase` (12 queries), and `mixed` (10 queries). These classes mirror the distribution from the shared sets, enabling direct comparison of keyword lookups against semantic questions. Relevance judgments are binary (`rel` 1). A document is judged relevant if it directly states the legal requirement, specification, or safety threshold queried; a document that only cross-references or mentions the standard without setting out the operative requirement is judged non-relevant.
+
+Candidate pooling was performed using the union of top 10 results from `bm25`, `dense`, and `hybrid` generated by `scripts/judging_sheet.py`, supplemented by targeted structural searches across the subpart directory (`subparts.md`) to catch provisions missed by first-stage retrieval (such as dynamite storage and transport in Subpart U). Every candidate document was read in full before labeling.
 
 ---
 
@@ -152,6 +163,7 @@ Scores per system on your gold set.
 | dense | 0.891 | 0.597 | 0.655 |
 | hybrid | 0.875 | 0.614 | 0.681 |
 | rerank | 0.938 | 0.938 | 0.931 |
+| ablation/bm25_lab | 0.859 | 0.601 | 0.664 |
 
 32 judged queries; nDCG uses binary labels; a random ranking of the 307 documents would get recall@10 near 0.033.
 <!-- p2:end own -->
@@ -173,6 +185,9 @@ The same scores per query class.
 | rerank | Recall@10 | 0.900 | 0.917 | 1.000 |
 | rerank | MRR@10 | 0.900 | 0.917 | 1.000 |
 | rerank | nDCG@10 | 0.900 | 0.906 | 0.992 |
+| ablation/bm25_lab | Recall@10 | 1.000 | 0.708 | 0.900 |
+| ablation/bm25_lab | MRR@10 | 0.738 | 0.334 | 0.783 |
+| ablation/bm25_lab | nDCG@10 | 0.801 | 0.433 | 0.803 |
 <!-- p2:end own-classes -->
 
 The same scores for the queries you wrote yourself (`hand`) and the ones a model drafted (`claude`), with the difference between the two groups and its interval.
@@ -193,6 +208,9 @@ Once both groups have queries, the table also says whether `bm25`'s lead over `d
 | rerank | Recall@10 | 0.900 | 0.955 | -0.055 | [-0.300, +0.136] | not distinguishable |
 | rerank | MRR@10 | 0.900 | 0.955 | -0.055 | [-0.300, +0.136] | not distinguishable |
 | rerank | nDCG@10 | 0.888 | 0.951 | -0.063 | [-0.300, +0.112] | not distinguishable |
+| ablation/bm25_lab | Recall@10 | 0.800 | 0.886 | -0.086 | [-0.377, +0.173] | not distinguishable |
+| ablation/bm25_lab | MRR@10 | 0.620 | 0.592 | +0.028 | [-0.284, +0.327] | not distinguishable |
+| ablation/bm25_lab | nDCG@10 | 0.670 | 0.661 | +0.009 | [-0.271, +0.275] | not distinguishable |
 
 The hand and claude queries are different queries, so the interval of hand minus claude comes from resampling the queries within each group (10,000 times), not from pairing them.
 
@@ -232,15 +250,31 @@ Differences between every pair of systems.
 | rerank minus hybrid | Recall@10 | +0.062 | [+0.000, +0.156] | 0.122 | not distinguishable |
 | rerank minus hybrid | MRR@10 | +0.323 | [+0.201, +0.449] | 0.184 | rerank higher |
 | rerank minus hybrid | nDCG@10 | +0.250 | [+0.149, +0.358] | 0.153 | rerank higher |
+| ablation/bm25_lab minus bm25 | Recall@10 | +0.000 | [+0.000, +0.000] | - | identical on every query |
+| ablation/bm25_lab minus bm25 | MRR@10 | -0.023 | [-0.062, +0.000] | 0.048 | not distinguishable |
+| ablation/bm25_lab minus bm25 | nDCG@10 | -0.018 | [-0.047, +0.000] | 0.036 | not distinguishable |
+| ablation/bm25_lab minus dense | Recall@10 | -0.031 | [-0.172, +0.125] | 0.217 | not distinguishable |
+| ablation/bm25_lab minus dense | MRR@10 | +0.004 | [-0.123, +0.132] | 0.189 | not distinguishable |
+| ablation/bm25_lab minus dense | nDCG@10 | +0.009 | [-0.108, +0.124] | 0.171 | not distinguishable |
+| ablation/bm25_lab minus hybrid | Recall@10 | -0.016 | [-0.109, +0.078] | 0.133 | not distinguishable |
+| ablation/bm25_lab minus hybrid | MRR@10 | -0.013 | [-0.089, +0.067] | 0.115 | not distinguishable |
+| ablation/bm25_lab minus hybrid | nDCG@10 | -0.017 | [-0.083, +0.055] | 0.102 | not distinguishable |
+| ablation/bm25_lab minus rerank | Recall@10 | -0.078 | [-0.203, +0.031] | 0.179 | not distinguishable |
+| ablation/bm25_lab minus rerank | MRR@10 | -0.337 | [-0.480, -0.197] | 0.210 | rerank higher |
+| ablation/bm25_lab minus rerank | nDCG@10 | -0.267 | [-0.397, -0.142] | 0.188 | rerank higher |
 
-The interval is a paired bootstrap (10,000 resamples of the queries); MDD is the smallest difference this many queries detect 80% of the time.
+The interval is a paired bootstrap (10,000 resamples of the queries); MDD is the smallest difference this many queries detect 80% of the time. Two systems that score the same on every query have no interval to speak of, so their MDD is shown as -.
 <!-- p2:end own-pairs -->
 
 Which differences are distinguishable and which are not, at your gold-set size?
 Do the `hand` queries and the `claude` queries tell the same story?
 Did your prediction in `DECISIONS.md` prompt 1 hold?
 
-TODO: write what your own-corpus intervals let you claim.
+On the 32 judged queries of the own gold set, `rerank` outperforms all three first-stage systems by statistically distinguishable margins: `rerank minus hybrid` is +0.323 MRR@10 [+0.201, +0.449] and +0.250 nDCG@10 [+0.149, +0.358]; `rerank minus bm25` is +0.313 MRR@10 [+0.174, +0.456] and +0.250 nDCG@10 [+0.126, +0.380]; and `rerank minus dense` is +0.341 MRR@10 [+0.204, +0.474] and +0.276 nDCG@10 [+0.164, +0.388]. In all three comparisons, the 95% bootstrap intervals are entirely above zero.
+
+Conversely, the three first-stage retrievers are not distinguishable from each other on this gold set. `dense minus bm25` is -0.027 MRR@10 [-0.153, +0.099], `hybrid minus bm25` is -0.010 MRR@10 [-0.089, +0.061], and `hybrid minus dense` is +0.017 MRR@10 [-0.073, +0.105]. With minimum detectable differences between 0.110 and 0.187, the small differences among the first-stage systems (all scoring around 0.60 to 0.62 MRR@10) cannot be reliably resolved.
+
+The `hand` (n=10) and `claude` (n=22) queries tell a consistent story: while Claude-drafted queries exhibit higher mean content-word overlap with their best relevant document (0.80 vs. 0.63 for hand queries), the difference in BM25's lead over dense between the two groups is +0.049 MRR@10 [-0.223, +0.294] and +0.016 nDCG@10 [-0.217, +0.230], both indistinguishable from zero. My prior expectation in `DECISIONS.md` prompt 1 held: `rerank` achieved overwhelming victory (MRR 0.938), and the first-stage systems clustered closely together.
 
 ---
 
@@ -250,22 +284,50 @@ Change one thing and keep everything else the same.
 Write your hypothesis here before you run it, in one sentence with a direction: "I expect X to raise MRR@10 on my corpus because Y."
 The run file for it lives in `runs/own/ablation/`.
 
+I expect `bm25_lab` (the plain alphanumeric tokenizer) to lower MRR@10 on my corpus compared to `bm25` because splitting regulatory citations such as 1926.1153 into isolated numbers dilutes exact section matching across hundreds of sections sharing the 1926 prefix.
+
 <!-- p2:begin own-ablation -->
-_No ablation runs yet: `uv run p2 run --corpus own --system NAME --ablation` writes one to runs/own/ablation/, then `uv run p2 score` fills this table._
+| Comparison | Metric | Mean difference | 95% interval | MDD | Reading |
+| --- | --- | ---: | ---: | ---: | --- |
+| ablation/bm25_lab minus bm25 | Recall@10 | +0.000 | [+0.000, +0.000] | - | identical on every query |
+| ablation/bm25_lab minus bm25 | MRR@10 | -0.023 | [-0.062, +0.000] | 0.048 | not distinguishable |
+| ablation/bm25_lab minus bm25 | nDCG@10 | -0.018 | [-0.047, +0.000] | 0.036 | not distinguishable |
+| ablation/bm25_lab minus dense | Recall@10 | -0.031 | [-0.172, +0.125] | 0.217 | not distinguishable |
+| ablation/bm25_lab minus dense | MRR@10 | +0.004 | [-0.123, +0.132] | 0.189 | not distinguishable |
+| ablation/bm25_lab minus dense | nDCG@10 | +0.009 | [-0.108, +0.124] | 0.171 | not distinguishable |
+| ablation/bm25_lab minus hybrid | Recall@10 | -0.016 | [-0.109, +0.078] | 0.133 | not distinguishable |
+| ablation/bm25_lab minus hybrid | MRR@10 | -0.013 | [-0.089, +0.067] | 0.115 | not distinguishable |
+| ablation/bm25_lab minus hybrid | nDCG@10 | -0.017 | [-0.083, +0.055] | 0.102 | not distinguishable |
+| ablation/bm25_lab minus rerank | Recall@10 | -0.078 | [-0.203, +0.031] | 0.179 | not distinguishable |
+| ablation/bm25_lab minus rerank | MRR@10 | -0.337 | [-0.480, -0.197] | 0.210 | rerank higher |
+| ablation/bm25_lab minus rerank | nDCG@10 | -0.267 | [-0.397, -0.142] | 0.188 | rerank higher |
+
+The interval is a paired bootstrap (10,000 resamples of the queries); MDD is the smallest difference this many queries detect 80% of the time. Two systems that score the same on every query have no interval to speak of, so their MDD is shown as -.
 <!-- p2:end own-ablation -->
 
 The queries your ablation helped and hurt, against the system it varies, by reciprocal rank.
 `p2 score` finds that system from a line such as `BASE = "bm25"` in your variant's file, or else from its name: `bm25_lab` varies `bm25`.
 
 <!-- p2:begin own-ablation-queries -->
-_No ablation runs yet: `uv run p2 run --corpus own --system NAME --ablation` writes one to runs/own/ablation/, then `uv run p2 score` fills this table._
+ablation/bm25_lab against bm25 (BASE = "bm25" in p2/retrievers/bm25_lab.py): it helped 0 queries, hurt 2 and left 30 unchanged.
+
+| Query | Class | Origin | bm25 RR | ablation/bm25_lab RR | Change | Effect |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| c01 | identifier | claude | 1.000 | 0.500 | -0.500 | hurt |
+| c07 | identifier | claude | 0.500 | 0.250 | -0.250 | hurt |
+
+RR is the reciprocal rank of the first relevant document in the top 10 (0 when none is there), the per-query value behind MRR@10; the queries at the top of each list are the ones to read.
 <!-- p2:end own-ablation-queries -->
 
 What did you change, what happened, and does the interval support the claim you want to make?
 If the result is not distinguishable, say what size of effect your gold set could have seen.
 Read the queries at the top of each list in the second table, and say whether your change explains them.
 
-TODO: write the ablation: the one change, the hypothesis, the result and the claim.
+I changed the BM25 tokenizer from `codes` to the plain `[a-z0-9]+` lab 12 tokenizer (`tokenizer = "lab"`) in `p2/retrievers/bm25_lab.py`, keeping all other parameters ($k_1 = 0.9, b = 0.4$, chunking 300/50) identical. I hypothesized that `bm25_lab` would lower MRR@10 because splitting regulatory section citations into isolated digits dilutes exact section matches across hundreds of sections sharing the 1926 prefix.
+
+`bm25_lab` achieved an MRR@10 of 0.601, compared to 0.624 for standard `bm25`. The mean difference is -0.023 MRR@10 with a 95% paired bootstrap interval of [-0.062, +0.000] and an MDD of 0.048. Because the upper bound of the interval touches zero, the aggregate difference is technically classified as not distinguishable on this 32-query set, though the direction strictly favors `bm25`. 
+
+Inspection of the `own-ablation-queries` table reveals exactly why: the lab tokenizer helped 0 queries, left 30 unchanged, and hurt 2 queries—both of which were `identifier` queries. On `c01` ("What does 1926.1053 require for portable ladders?"), reciprocal rank dropped from 1.000 to 0.500 (-0.500); on `c07` ("Table A minimum clearance distances 1926.1408"), reciprocal rank dropped from 0.500 to 0.250 (-0.250). In both cases, tokenizing "1926.1053" or "1926.1408" into separate numbers "1926", "1053", and "1408" caused other sections mentioning those numbers or the ubiquitous prefix "1926" to outscore the target section. Query `c02` ("1926.1153 Table 1") further illustrates this dynamic: section numbers and table labels ("Table 1", "Table A") are exactly what the tokenizer change affects. In `c02`, `1926.55` (which features its own Table 1 and cross-references 1926.1153 in footnote p) competes directly with `1926.1153`; when compound designations are split into bare words and numbers, exact section specificity is eroded across the corpus. These specific losses confirm the mechanism behind the hypothesis.
 
 ---
 
@@ -277,8 +339,13 @@ Then sort the failures by cause, for example a vocabulary mismatch, near-duplica
 
 | qid | what the best system returned | what was relevant | cause | what you would try |
 |---|---|---|---|---|
+| c02 | 1926.5 (OMB numbers) at rank 1 | 1926.1153 (Respirable crystalline silica Table 1), missing from top 10 | First-stage RRF truncation: dense ranked 1926.1153 outside its top 20, dragging it out of hybrid's top 20 pool so rerank never saw it | Expand the reranker candidate pool from 20 to 50 candidates, or union top retrievals |
+| h06 | 1926.900 (Blasting general provisions) at rank 1 | 1926.904 (Storage) and 1926.902 (Transportation), missing from top 10 | Vocabulary mismatch: query asks for "dynamite" while regulations exclusively use "explosives and blasting agents" | Query expansion with domain synonyms mapping "dynamite" to "explosives" |
+| c10 | 1926.1408 at rank 1 in rerank, but hybrid returned 1926.1410 (operations closer than Table A) | 1926.1408 (Power line safety clearance distance) | Near-duplicate statutory overlap: exception and assembly sections (1410, 1407) crowded out the primary operating rule in first stage | Cross-passage contextual reranking (which successfully promoted 1926.1408 to rank 1) |
+| h08 | 1926.59 at rank 1 in rerank, but hybrid returned 1926.65__part07 (HAZWOPER guidelines) | 1926.59 (Hazard communication) | Document length / stub document penalty: 1926.59 is a 4-line stub citing 1910.1200, outscored in first stage by massive HAZWOPER texts | Inlining incorporated standard text during ingestion so stubs contain substantive terms |
+| c08 | 1926.501 at rank 1 in rerank, but bm25 returned 1926.97 and missed 1926.501 completely | 1926.501 (Duty to have fall protection) | Conversational paraphrase vocabulary mismatch: "stop them from falling" vs statutory "fall protection systems" | Dense semantic embeddings (which ranked 1926.501 at rank 1) to bridge paraphrase gaps |
 
-TODO: add one row for each failure you analyzed, and write two or three sentences on the pattern you see across them.
+Across these failures, two distinct patterns emerge: (1) vocabulary gaps on informal or colloquial phrasing ("dynamite", "stop them from falling") where keyword systems fail without semantic support or synonym expansion, and (2) first-stage candidate truncation, where near-duplicate regulations or length-advantaged documents push the operative standard out of the top 20 candidate pool passed to the reranker. Because the reranker's recall ceiling is strictly bounded by the first-stage hybrid candidate pool, retrieval failures at stage one cannot be repaired downstream.
 
 ---
 
@@ -291,7 +358,18 @@ Did the winner change between the shared corpus and yours?
 Why, or why not: what is different about the two collections (document length, vocabulary, identifiers, near-duplicates, how the queries were written), and which of your explanations did you test and which are guesses?
 Say what 20 queries on one side and your gold-set size on the other cannot support.
 
-TODO: write the cross-corpus comparison.
+| Corpus | Documents | Mean words | Median words | Docs > 300 words | bm25 MRR | dense MRR | hybrid MRR | rerank MRR |
+|---|---|---|---|---|---|---|---|---|
+| shared (30 CFR) | 2,484 | 158 | 68 | 13% | 0.507 | 0.562 | 0.471 | 0.800 |
+| own (29 CFR 1926) | 307 | 1,185 | 378 | 55% | 0.624 | 0.597 | 0.614 | 0.938 |
+
+The overall winner did not change between collections: `rerank` dominated on both corpora (MRR@10 of 0.800 on shared practice and 0.938 on the own corpus), significantly outperforming every first-stage system. However, the two corpora differ substantially in their structure and retrieval behavior:
+
+1. **Document length and chunking:** Documents in 29 CFR 1926 are roughly seven times longer on average than those in 30 CFR (mean 1,185 words vs. 158 words). While 87% of 30 CFR documents fit entirely within a single 300-word chunk, 55% of the own corpus documents require multiple chunks. Consequently, chunk boundary splits and max-score aggregation matter significantly more on the own corpus.
+2. **Near-duplicate structure:** 30 CFR is structured around parallel mining subchapters (parts 56, 57, 75, and 77) that contain near-verbatim duplicate provisions (e.g. backup alarms, seat belts, electrical testing). In contrast, 29 CFR 1926 concentrates construction safety into unified subparts with fewer verbatim cross-section duplicates. This cleaner partition helps explain why the reranker reached an even higher absolute score on the own corpus (0.938 MRR@10) by distinguishing operative provisions from definition or scope paragraphs.
+3. **Tested vs. speculative explanations:** The document word counts, chunking fractions, and token distributions are measured facts. The role of parallel duplicate sections in suppressing first-stage precision is supported by inspection of the practice qrels, but remains an observational inference rather than an experimentally isolated variable.
+
+Critically, with only 20 queries on the shared corpus (MDD ~0.25 to 0.41) and 32 queries on the own corpus (MDD ~0.11 to 0.19), neither test set can detect small shifts in retriever quality. Claims that dense retrieval or hybrid fusion is fundamentally superior to BM25 on either corpus are unsupported by the confidence intervals.
 
 ---
 
@@ -359,6 +437,7 @@ Systems that do not call Claude, from traces/retrieval/ on the machine that last
 
 | Trace | System | Queries | Seconds | Milliseconds per query |
 | --- | --- | ---: | ---: | ---: |
+| traces/retrieval/own-own-ablation-bm25_lab.jsonl | bm25_lab | 32 | 0.02 | 0.6 |
 | traces/retrieval/own-own-bm25.jsonl | bm25 | 32 | 0.02 | 0.7 |
 | traces/retrieval/own-own-dense.jsonl | dense | 32 | 0.15 | 4.8 |
 | traces/retrieval/own-own-hybrid.jsonl | hybrid | 32 | 0.19 | 5.9 |
@@ -380,7 +459,7 @@ _No stretch runs yet (stretch option 5): `uv run p2 run --corpus own --queries e
 
 ### Your stretch
 
-Write the five things here.
+rider (the 598E rider constitutes the stretch requirement; see section 9 below).
 
 ---
 
@@ -430,7 +509,9 @@ Each repeat answers the same questions, so the repeats are not independent trial
 Does the reranker's gain over its first stage survive the run-to-run variation?
 Write what the spread is, how it compares with the gain, and what the Wilson intervals on the verified share and the declined share say about 8 and 4 questions.
 
-598E: write the repeats result here.
+Across three repeated runs of `rerank` on the shared practice queries (`r1`, `r2`, `r3`), MRR@10 was identical across all three runs (0.800, range 0.000), while nDCG@10 exhibited a minor spread of 0.021 (ranging from 0.743 to 0.765) and recall@10 had a spread of 0.025 (0.733 to 0.758). The reranker's measured gain over `hybrid` in all three repeats was +0.329 MRR@10 [+0.164, +0.504] and +0.300 to +0.322 nDCG@10 [+0.176, +0.449]. Because the run-to-run variation (range 0.000 to 0.025) is negligible compared to the +0.329 gain, the reranker's advantage decisively survives run-to-run variance.
+
+For the cited answers across the three repeats, the model verified 8 of 8 in-corpus questions (100%) and declined 4 of 4 out-of-corpus questions (100%) each time (range 0.000). The Wilson 95% confidence intervals are [0.676, 1.000] for answering and [0.510, 1.000] for declining. The perfect agreement suggests that Sonnet's behavior on this constrained extraction schema is highly deterministic, though the wide Wilson intervals emphasize that small question sets (8 and 4 items) inherently possess broad uncertainty.
 
 ### The pre-registered claim
 
@@ -438,4 +519,6 @@ The claim, the smallest effect, the gold-set size and the test are in `PREREG.md
 Here, say whether you followed the plan, what the interval turned out to be, and what that means.
 The outcome section of `PREREG.md` holds the short version.
 
-598E: write the claim and its outcome here.
+I pre-registered a directional hypothesis in `PREREG.md` at commit `c7b2bd3` prior to committing any own-corpus relevance judgments: on 29 CFR 1926, `rerank` would achieve a higher nDCG@10 than `hybrid` with a smallest meaningful effect size $\Delta = 0.15$. The required gold-set sample size was calculated at 31 queries based on stage 1 standard deviations ($sd = 0.297$); I collected and judged 32 queries (22 Claude-drafted, 10 written by hand).
+
+The empirical outcome confirmed the pre-registered claim: `rerank` attained an nDCG@10 of 0.931 versus `hybrid`'s 0.681. The mean difference is +0.250 with a 95% paired bootstrap interval of [+0.149, +0.358] and an MDD of 0.153. Because the interval is entirely above zero and the point estimate (+0.250) exceeds $\Delta = 0.15$, the outcome falls in the 'supported' row of the pre-registration protocol: the reranker provides a statistically distinguishable, large advantage over hybrid search when navigating complex, structurally repetitive regulatory text.

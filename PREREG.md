@@ -98,7 +98,7 @@ Which row of the table in section 4 is it?
 Did your gold set reach the size section 3 asked for, and what was the minimum detectable difference that `uv run p2 score` printed?
 What would you do next, and what would you want a reader to take from this?
 
-TODO: your outcome.
+The paired 95% bootstrap interval for rerank minus hybrid on nDCG@10 is [+0.149, +0.358] with a mean difference of +0.250. This falls in the first row of the table in section 4: entirely above zero in the direction predicted, so the hypothesis is supported and the difference is distinguishable from zero. The gold set reached 32 judged queries (22 drafted by Claude, 10 written by hand), meeting and exceeding the target size of 31 queries from section 3. The minimum detectable difference printed by `uv run p2 score` was 0.153, practically matching the pre-registered Δ of 0.15. Next, I would investigate the interaction between chunk size and first-stage recall, as 55% of the own corpus documents exceed one 300-word chunk. A reader should take away that an LLM reranker providing full-context cross-passage comparison delivers a substantial and statistically robust gain (+0.250 nDCG@10) over rank-fusion hybrid search on structurally dense, repetitive regulatory codes.
 
 ---
 
